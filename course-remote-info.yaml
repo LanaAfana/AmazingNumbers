@@ -3,7 +3,7 @@ hyperskill_project:
   ide_files: https://cogniterra.org/media/attachments/lesson/25552/additional_files.json
   is_template_based: false
   use_ide: true
-update_date: "Mon, 10 Jul 2023 18:42:42 UTC"
+update_date: "Wed, 12 Jul 2023 12:41:27 UTC"
 stages:
 - id: 931
   step: 13198
@@ -22,7 +22,7 @@ stages:
   is_completed: true
 - id: 936
   step: 13203
-  is_completed: false
+  is_completed: true
 - id: 937
   step: 13204
   is_completed: false

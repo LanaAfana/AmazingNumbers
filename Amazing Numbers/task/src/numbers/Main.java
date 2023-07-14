@@ -1,20 +1,20 @@
 package numbers;
 
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class Main {
 
+    public static List<String> badProps = new ArrayList<>();
+    public static List<String> mutuallyExclProps = new ArrayList<>();
+
     public enum Variants {
-        PROPER_FIRST_PARAMETER,
-        PROPER_SECOND_PARAMETER,
-        PROPER_THIRD_PARAMETER,
-        PROPER_FOURTH_PARAMETER,
-        BAD_FIRST_PARAMETER,
-        BAD_SECOND_PARAMETER,
-        BAD_THIRD_PARAMETER,
-        BAD_FOURTH_PARAMETER,
-        BAD_THIRD_AND_FOURTH_PARAMETERS,
+        PROPER_NUMBER,
+        PROPER_QTY,
+        PROPER_PROPERTIES,
+        BAD_NUMBER,
+        BAD_QTY,
+        BAD_PROPERTIES,
+        MUTUALLY_EXCLUSIVE_PROPERTIES,
         EXIT
     }
     public static Long getNumber(String input) {
@@ -25,19 +25,16 @@ public class Main {
         return Integer.parseInt(input.split(" ")[1]);
     }
 
-    public static String getFirstProperty(String input) {
-        return input.split(" ")[2].toUpperCase();
+    public static List<String> getProperties(String input) {
+        return Arrays.stream(input.split(" "))
+                .skip(2)
+                .map(String::toUpperCase).toList();
     }
 
-    public static String getSecondProperty(String input) {
-        return input.split(" ")[3].toUpperCase();
-    }
-
-    public static Boolean isMutuallyExclusiveProperties(String input) {
-        String firstProp = getFirstProperty(input);
-        String secondProp = getSecondProperty(input);
+    public static Boolean isMutuallyExclusiveProperties(List<String> props) {
         for (List<String> list : AmazingNumber.mutiallyExclusiveProps) {
-            if (list.contains(firstProp) && list.contains(secondProp)) {
+            if (props.contains(list.get(0)) && props.contains(list.get(1))) {
+                mutuallyExclProps.addAll(list);
                 return true;
             }
         }
@@ -51,179 +48,132 @@ public class Main {
 
     public static void printNumbersByQty(String input) {
         AmazingNumber amazingNumber;
-        Long number = getNumber(input);
+        long number = getNumber(input);
         for (int i = 0; i < getQty(input); i++) {
             amazingNumber = new AmazingNumber(number + i);
             amazingNumber.printPropertiesRow();
         }
     }
 
-    public static void printNumbersByProperty(String input) {
+    public static void printNumbersByProperties(String input) {
         AmazingNumber amazingNumber;
         Long number = getNumber(input);
-        String firstProperty = getFirstProperty(input);
+        List<String> properties = getProperties(input);
         Integer counter = 0;
+        boolean isAllProps = true;
         for (int i = 0; i < getQty(input); i++) {
             do {
                 amazingNumber = new AmazingNumber(number + counter);
-                if (amazingNumber.numProps.get(firstProperty).equals(true)) {
-                    amazingNumber.printPropertiesRow();
-                    counter++;
-                    break;
+                for (String prop : properties) {
+                    if (amazingNumber.numProps.get(prop).equals(false)) {
+                       isAllProps = false;
+                       break;
+                    }
                 }
                 counter++;
-            } while (true);
+                if (isAllProps) {
+                    amazingNumber.printPropertiesRow();
+                    break;
+                }
+                isAllProps = true;
+            } while (i < getQty(input));
         }
     }
 
-    public static void printNumbersByTwoProperties(String input) {
-        AmazingNumber amazingNumber;
-        Long number = getNumber(input);
-        String firstProperty = getFirstProperty(input);
-        String secondProperty = getSecondProperty(input);
-        Integer counter = 0;
-        for (int i = 0; i < getQty(input); i++) {
-            do {
-                amazingNumber = new AmazingNumber(number + counter);
-                if (amazingNumber.numProps.get(firstProperty).equals(true) &&
-                        amazingNumber.numProps.get(secondProperty).equals(true)) {
-                    amazingNumber.printPropertiesRow();
-                    counter++;
-                    break;
-                }
-                counter++;
-            } while (true);
-        }
-    }
-    public static Variants check(String inputLine) {
-        Variants variant;
-        Scanner scanner = new Scanner(inputLine);
+    public static Variants check(String input) {
+        Scanner scanner = new Scanner(input);
         if (scanner.hasNextLong()) { // check the first parameter
-            Long inputNumber = scanner.nextLong();
+            long inputNumber = scanner.nextLong();
             if (inputNumber == 0) {
                 return Variants.EXIT;
             } else if (inputNumber < 0) {
-                return Variants.BAD_FIRST_PARAMETER;
+                return Variants.BAD_NUMBER;
             }
         } else {
-            return Variants.BAD_FIRST_PARAMETER;
+            return Variants.BAD_NUMBER;
         }
 
         if (scanner.hasNext()) { // check the second parameter
             if (scanner.hasNextInt()) {
-                Integer inputQty = scanner.nextInt();
+                int inputQty = scanner.nextInt();
                 if (inputQty < 0) {
-                    return Variants.BAD_SECOND_PARAMETER;
+                    return Variants.BAD_QTY;
                 }
             } else {
-                return Variants.BAD_SECOND_PARAMETER;
+                return Variants.BAD_QTY;
             }
+            if (!scanner.hasNext()) { return Variants.PROPER_QTY; }
         } else {
-            return Variants.PROPER_FIRST_PARAMETER;
+            return Variants.PROPER_NUMBER;
         }
 
-        if (scanner.hasNext()) { // check the third parameter
-            String inputProperty = scanner.next();
-            if (AmazingNumber.isProperty(inputProperty)) {
-                variant = Variants.PROPER_THIRD_PARAMETER;
-            } else {
-                variant = Variants.BAD_THIRD_PARAMETER;
+        List<String> properties = getProperties(input);
+        for (String prop : properties) {
+            if (!AmazingNumber.isProperty(prop)) {
+                badProps.add(prop);
             }
-        } else {
-            return Variants.PROPER_SECOND_PARAMETER;
         }
-
-        if (scanner.hasNext()) { // check the third parameter
-            String inputProperty = scanner.next();
-            if (AmazingNumber.isProperty(inputProperty)) {
-                if (variant == Variants.BAD_THIRD_PARAMETER) {
-                    return Variants.BAD_THIRD_PARAMETER;
-                } else {
-                    return Variants.PROPER_FOURTH_PARAMETER;
-                }
+        if (badProps.isEmpty()) {
+            if (isMutuallyExclusiveProperties(properties)) {
+                return Variants.MUTUALLY_EXCLUSIVE_PROPERTIES;
             } else {
-                if (variant == Variants.BAD_THIRD_PARAMETER) {
-                    return Variants.BAD_THIRD_AND_FOURTH_PARAMETERS;
-                } else {
-                    return Variants.BAD_FOURTH_PARAMETER;
-                }
+                return Variants.PROPER_PROPERTIES;
             }
         } else {
-            return variant;
+            return Variants.BAD_PROPERTIES;
         }
     }
 
     public static void main(String[] args) {
-        String instructions = "Welcome to Amazing Numbers!\n" +
-                    "Supported requests:\n" +
-                    "- enter a natural number to know its properties; \n" +
-                    "- enter two natural numbers to obtain the properties of the list:\n" +
-                    "  * the first parameter represents a starting number;\n" +
-                    "  * the second parameter shows how many consecutive numbers are to be printed;\n" +
-                    "- two natural numbers and a property to search for;\n" +
-                    "- two natural numbers and two properties to search for;\n" +
-                    "- separate the parameters with one space;\n" +
-                    "- enter 0 to exit.";
+        String instructions = """
+                Welcome to Amazing Numbers!
+                Supported requests:
+                - enter a natural number to know its properties;\s
+                - enter two natural numbers to obtain the properties of the list:
+                  * the first parameter represents a starting number;
+                  * the second parameter shows how many consecutive numbers are to be printed;
+                - two natural numbers and a property to search for;
+                - two natural numbers and two properties to search for;
+                - separate the parameters with one space;
+                - enter 0 to exit.""";
         System.out.println(instructions);
         Scanner scanner = new Scanner(System.in);
         String input;
-        AmazingNumber amazingNumber;
-        Boolean isExit = false;
+        boolean isExit = false;
         do {
             System.out.print("Enter a request: ");
             if (scanner.hasNextLine()) {
                 input = scanner.nextLine();
-                switch(check(input)) {
-                    case EXIT:
+                switch (check(input)) {
+                    case EXIT -> {
                         System.out.println("Goodbye!\nProcess finished with exit code 0");
                         isExit = true;
-                        break;
-                    case BAD_FIRST_PARAMETER:
-                        System.out.println("The first parameter should be a natural number or zero.");
-                        break;
-                    case BAD_SECOND_PARAMETER:
-                        System.out.println("The second parameter should be a natural number.");
-                        break;
-                    case BAD_THIRD_PARAMETER:
-                        System.out.printf("The property [%s] is wrong.\n" +
-                                "Available properties: [EVEN, ODD, BUZZ, DUCK, PALINDROMIC, GAPFUL, SPY, SQUARE, SUNNY]%n",
-                                input.split(" ")[2]);
-                        break;
-                    case BAD_FOURTH_PARAMETER:
-                        System.out.printf("The property [%s] is wrong.\n" +
-                                "Available properties: [EVEN, ODD, BUZZ, DUCK, PALINDROMIC, GAPFUL, SPY, SQUARE, SUNNY]%n",
-                                input.split(" ")[3]);
-                        break;
-                    case BAD_THIRD_AND_FOURTH_PARAMETERS:
-                        System.out.printf("The properties [%s, %s] are wrong.\n" +
-                                "Available properties: [EVEN, ODD, BUZZ, DUCK, PALINDROMIC, GAPFUL, SPY, SQUARE, SUNNY]%n",
-                                input.split(" ")[2],
-                                input.split(" ")[3]);
-                        break;
-                    case PROPER_FIRST_PARAMETER:
-                        printPropertiesByColumn(input);
-                        break;
-                    case PROPER_SECOND_PARAMETER:
-                        printNumbersByQty(input);
-                        break;
-                    case PROPER_THIRD_PARAMETER:
-                        printNumbersByProperty(input);
-                        break;
-                    case PROPER_FOURTH_PARAMETER:
-                        if (isMutuallyExclusiveProperties(input)) {
-                            System.out.printf("The request contains mutually exclusive properties: [%s, $s]\n" +
-                                    "There are no numbers with these properties.",
-                                    getFirstProperty(input),
-                                    getSecondProperty(input));
+                    }
+                    case BAD_NUMBER -> System.out.println("The first parameter should be a natural number or zero.");
+                    case BAD_QTY -> System.out.println("The second parameter should be a natural number.");
+                    case BAD_PROPERTIES -> {
+                        if (badProps.size() == 1) {
+                            System.out.printf("The property [%s] is wrong.\n" +
+                                            "Available properties: [BUZZ, DUCK, PALINDROMIC, GAPFUL, SPY, SQUARE, SUNNY, JUMPING, EVEN, ODD]%n",
+                                    badProps.get(0));
                         } else {
-                            printNumbersByTwoProperties(input);
+                            System.out.printf("The properties [%s] are wrong.\n" +
+                                            "Available properties: [BUZZ, DUCK, PALINDROMIC, GAPFUL, SPY, SQUARE, SUNNY, JUMPING, EVEN, ODD]%n",
+                                    badProps);
                         }
-                        break;
+                    }
+                    case MUTUALLY_EXCLUSIVE_PROPERTIES ->
+                            System.out.printf("The request contains mutually exclusive properties: [%s]\n" +
+                                            "There are no numbers with these properties.",
+                                    mutuallyExclProps.toString());
+                    case PROPER_NUMBER -> printPropertiesByColumn(input);
+                    case PROPER_QTY -> printNumbersByQty(input);
+                    case PROPER_PROPERTIES -> printNumbersByProperties(input);
                 }
             } else {
                 System.out.println(instructions);
             }
         } while (!isExit);
-        if (scanner != null) scanner.close();
+        scanner.close();
     }
 }

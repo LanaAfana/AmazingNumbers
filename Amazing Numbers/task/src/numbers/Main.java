@@ -28,11 +28,12 @@ public class Main {
     public static List<String> getProperties(String input) {
         return Arrays.stream(input.split(" "))
                 .skip(2)
+                .map(x -> x.replace("-", "_"))
                 .map(String::toUpperCase).toList();
     }
 
     public static Boolean isMutuallyExclusiveProperties(List<String> props) {
-        for (List<String> list : AmazingNumber.mutiallyExclusiveProps) {
+        for (List<String> list : AmazingNumber.mutuallyExclusiveProps) {
             if (props.contains(list.get(0)) && props.contains(list.get(1))) {
                 mutuallyExclProps.addAll(list);
                 return true;
@@ -61,13 +62,22 @@ public class Main {
         List<String> properties = getProperties(input);
         Integer counter = 0;
         boolean isAllProps = true;
+        String negProp;
         for (int i = 0; i < getQty(input); i++) {
             do {
                 amazingNumber = new AmazingNumber(number + counter);
                 for (String prop : properties) {
-                    if (amazingNumber.numProps.get(prop).equals(false)) {
-                       isAllProps = false;
-                       break;
+                    if (prop.charAt(0) == '_') {
+                        negProp = prop.replace("_", "");
+                        if (amazingNumber.numProps.get(negProp).equals(true)) {
+                            isAllProps = false;
+                            break;
+                        }
+                    } else {
+                        if (amazingNumber.numProps.get(prop).equals(false)) {
+                            isAllProps = false;
+                            break;
+                        }
                     }
                 }
                 counter++;
@@ -128,12 +138,12 @@ public class Main {
         String instructions = """
                 Welcome to Amazing Numbers!
                 Supported requests:
-                - enter a natural number to know its properties;\s
+                - enter a natural number to know its properties;
                 - enter two natural numbers to obtain the properties of the list:
                   * the first parameter represents a starting number;
-                  * the second parameter shows how many consecutive numbers are to be printed;
-                - two natural numbers and a property to search for;
-                - two natural numbers and two properties to search for;
+                  * the second parameter shows how many consecutive numbers are to be processed;
+                - two natural numbers and properties to search for;
+                - a property preceded by minus must not be present in numbers;
                 - separate the parameters with one space;
                 - enter 0 to exit.""";
         System.out.println(instructions);
@@ -154,11 +164,11 @@ public class Main {
                     case BAD_PROPERTIES -> {
                         if (badProps.size() == 1) {
                             System.out.printf("The property [%s] is wrong.\n" +
-                                            "Available properties: [BUZZ, DUCK, PALINDROMIC, GAPFUL, SPY, SQUARE, SUNNY, JUMPING, EVEN, ODD]%n",
+                                            "Available properties: [EVEN, ODD, BUZZ, DUCK, PALINDROMIC, GAPFUL, SPY, SQUARE, SUNNY, JUMPING, HAPPY, SAD]%n",
                                     badProps.get(0));
                         } else {
                             System.out.printf("The properties [%s] are wrong.\n" +
-                                            "Available properties: [BUZZ, DUCK, PALINDROMIC, GAPFUL, SPY, SQUARE, SUNNY, JUMPING, EVEN, ODD]%n",
+                                            "Available properties: [EVEN, ODD, BUZZ, DUCK, PALINDROMIC, GAPFUL, SPY, SQUARE, SUNNY, JUMPING, HAPPY, SAD]%n",
                                     badProps);
                         }
                     }

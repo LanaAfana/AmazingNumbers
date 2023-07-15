@@ -4,14 +4,36 @@ import java.util.*;
 
 public class AmazingNumber {
     enum Property {
-        EVEN, ODD, BUZZ, DUCK, PALINDROMIC, GAPFUL, SPY, SQUARE, SUNNY, JUMPING
+        EVEN, ODD, BUZZ, DUCK, PALINDROMIC, GAPFUL, SPY, SQUARE, SUNNY, JUMPING, HAPPY, SAD,
+        _EVEN, _ODD, _BUZZ, _DUCK, _PALINDROMIC, _GAPFUL, _SPY, _SQUARE, _SUNNY, _JUMPING, _HAPPY, _SAD
     }
-    public static List<List<String>> mutiallyExclusiveProps = List.of(
-            List.of(Property.EVEN.toString(), Property.ODD.toString()),
-            List.of(Property.DUCK.toString(), Property.SPY.toString()),
-            List.of(Property.SUNNY.toString(), Property.SQUARE.toString()));
+    public static List<List<String>> mutuallyExclusiveProps;
+
+    static {
+        mutuallyExclusiveProps = List.of(
+                List.of(Property.EVEN.toString(), Property.ODD.toString()),
+                List.of(Property._EVEN.toString(), Property._ODD.toString()),
+                List.of(Property.DUCK.toString(), Property.SPY.toString()),
+                List.of(Property.SUNNY.toString(), Property.SQUARE.toString()),
+                List.of(Property.HAPPY.toString(), Property.SAD.toString()),
+                List.of(Property._HAPPY.toString(), Property._SAD.toString()),
+                List.of(Property.EVEN.toString(), Property._EVEN.toString()),
+                List.of(Property.ODD.toString(), Property._ODD.toString()),
+                List.of(Property.BUZZ.toString(), Property._BUZZ.toString()),
+                List.of(Property.DUCK.toString(), Property._DUCK.toString()),
+                List.of(Property.PALINDROMIC.toString(), Property._PALINDROMIC.toString()),
+                List.of(Property.GAPFUL.toString(), Property._GAPFUL.toString()),
+                List.of(Property.SPY.toString(), Property._SPY.toString()),
+                List.of(Property.SQUARE.toString(), Property._SQUARE.toString()),
+                List.of(Property.SUNNY.toString(), Property._SUNNY.toString()),
+                List.of(Property.JUMPING.toString(), Property._JUMPING.toString()),
+                List.of(Property.HAPPY.toString(), Property._HAPPY.toString()),
+                List.of(Property.SAD.toString(), Property._SAD.toString())
+                );
+    }
+
     private final Long num;
-    Map<String, Boolean> numProps = new HashMap<String, Boolean>();
+    Map<String, Boolean> numProps = new HashMap<>();
 
     AmazingNumber(Long num) {
         this.num = num;
@@ -25,15 +47,13 @@ public class AmazingNumber {
         this.numProps.put(Property.SQUARE.toString(), this.isSquare());
         this.numProps.put(Property.SUNNY.toString(), this.isSunny());
         this.numProps.put(Property.JUMPING.toString(), this.isJumping());
+        this.numProps.put(Property.HAPPY.toString(), this.isHappy());
+        this.numProps.put(Property.SAD.toString(), !this.isHappy());
     }
 
-    Long value() {
-        return num;
-    }
-
-    Boolean isNatural() {
-        return this.num > 0;
-    }
+//    Boolean isNatural() {
+//        return this.num > 0;
+//    }
 
     Boolean isEven() { return this.num % 2 == 0; }
 
@@ -51,18 +71,17 @@ public class AmazingNumber {
         return this.num.toString().contentEquals(new StringBuilder(this.num.toString()).reverse());
     }
 
-    ArrayList<Integer> numToList() {
-        ArrayList<Integer> list = new ArrayList();
-        for (Character ch : this.num.toString().toCharArray()) {
+    static ArrayList<Integer> numToList(Long num) {
+        ArrayList<Integer> list = new ArrayList<>();
+        for (Character ch : num.toString().toCharArray()) {
             list.add(Character.getNumericValue(ch));
         }
-//        Arrays.stream(this.num.toString().toCharArray()).map(Integer::parseInt).collect(Collectors.toList());
         return list;
     }
     Boolean isSpy() {
-        return this.numToList().stream()
+        return numToList(this.num).stream()
                 .reduce(0, Integer::sum)
-                .equals(this.numToList().stream()
+                .equals(numToList(this.num).stream()
                         .reduce(1, (x, y) -> x * y));
     }
 
@@ -89,15 +108,34 @@ public class AmazingNumber {
     }
 
     Boolean isJumping() {
-//        return this.numToList().stream().allMatch((x, y) -> (x. - y == 1) || (y - x == 1))
-        Integer prev = this.numToList().get(0);
-        for (Integer digit : this.numToList().stream().skip(1).toList()) {
+        Integer prev = numToList(this.num).get(0);
+        for (Integer digit : numToList(this.num).stream().skip(1).toList()) {
             if (prev - digit != 1 && digit - prev != 1) {
                 return false;
             }
             prev = digit;
         }
         return true;
+    }
+
+    Boolean isHappy() {
+        List<Integer> listOfDigits = numToList(this.num);
+        long sumOfSquareDigits;
+        int depth = 1000;
+        do {
+            sumOfSquareDigits = listOfDigits
+                    .stream()
+                    .mapToLong(x -> x * x)
+                    .sum();
+            if (sumOfSquareDigits == 1) {
+                return true;
+            } else if (sumOfSquareDigits == this.num || sumOfSquareDigits == 4) {
+                return false;
+            }
+            listOfDigits = numToList(sumOfSquareDigits);
+            depth--;
+        } while (depth > 0);
+        return  false;
     }
 
     static Boolean isProperty(String property) {
@@ -107,10 +145,10 @@ public class AmazingNumber {
 
 
     void printPropertiesColumn() {
-        //    Integer[] endWith = {0, 2, 4, 6, 8}; // return (Arrays.asList(endWith).contains(this.num % 10));
         String propertiesColumnString = "Properties of %d%neven: %b%nodd: " +
                 "%b%nbuzz: %b%nduck: %b%npalindromic: %b%ngapful: %b" +
-                "%nspy: %b%nsquare: %b%nsunny: %b%njumping: %b%n";
+                "%nspy: %b%nsquare: %b%nsunny: %b%njumping: %b"+
+                "%nhappy: %b%nsad: %b%n";
         System.out.printf(propertiesColumnString, this.num,
                         this.isEven(),
                         !this.isEven(),
@@ -121,7 +159,10 @@ public class AmazingNumber {
                         this.isSpy(),
                         this.isSquare(),
                         this.isSunny(),
-                        this.isJumping());
+                        this.isJumping(),
+                        this.isHappy(),
+                        !this.isHappy()
+                );
     }
 
     void printPropertiesRow() {
@@ -136,6 +177,8 @@ public class AmazingNumber {
         if (this.isSquare()) { listOfTrueProps.add(Property.SQUARE.toString().toLowerCase()); }
         if (this.isSunny()) { listOfTrueProps.add(Property.SUNNY.toString().toLowerCase()); }
         if (this.isJumping()) { listOfTrueProps.add(Property.JUMPING.toString().toLowerCase()); }
+        if (this.isHappy()) { listOfTrueProps.add(Property.HAPPY.toString().toLowerCase()); }
+        else { listOfTrueProps.add(Property.SAD.toString().toLowerCase()); }
         System.out.printf("%d is %s%n", this.num, String.join(", ", listOfTrueProps));
     }
 }
